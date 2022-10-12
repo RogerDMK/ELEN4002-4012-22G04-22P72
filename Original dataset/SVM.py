@@ -3,7 +3,9 @@ from sklearn.model_selection import train_test_split
 from sklearn.model_selection import GridSearchCV
 from sklearn.model_selection import RandomizedSearchCV
 from sklearn.metrics import classification_report, confusion_matrix
+from sklearn.metrics import roc_auc_score
 from sklearn.metrics import accuracy_score, classification_report, confusion_matrix, log_loss
+from bayes_opt import BayesianOptimization, UtilityFunction
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
@@ -45,15 +47,24 @@ def search_params(estimator, param_grid, search):
             )
     except:
         print('Search argument has to be "grid" or "random"')
-        sys.exit(0)
+        
         
     # Fit the model
     clf.fit(X=X_train, y=Y_train.ravel())
     
     return clf
 
+def black_box_function(C, degree):
+    model = SVC(C = C, degree = degree)
+    model.fit(X_train, Y_train.ravel())
+    y_score = model.decision_function(X_test)
+    f = roc_auc_score(Y_test.ravel(), y_score)
+    return f
+
+
 df = pd.read_csv('.\WildFires_DataSet.csv')
 print(df.head())
+print(df['CLASS'].value_counts())
 mapping = {'fire':1, 'no_fire':0}
 df = df.replace({'CLASS': mapping})
 df['LST'] = df['LST']/df['LST'].abs().max()
@@ -101,3 +112,26 @@ acc = accuracy_score(y_true=Y_test, y_pred=svm_random.predict(X_test))
 print("**Random search results**")
 print("Best training accuracy:\t", svm_random.best_score_)
 print("Test accuracy:\t", acc)
+
+utility = UtilityFunction(kind = "ucb", kappa = 1.96, xi = 0.01)
+optimizer = BayesianOptimization(f = None, 
+                                 pbounds = {"C": [0.01, 10], 
+                                            "degree": [1, 5]},
+                                 verbose = 2, random_state = 1234)
+
+for i in range(25):
+    # Get optimizer to suggest new parameter values to try using the
+    # specified acquisition function.
+    next_point = optimizer.suggest(utility)  # Force degree from float to int.
+    next_point["degree"] = int(next_point["degree"])    # Evaluate the output of the black_box_function using 
+    # the new parameter values.
+    target = black_box_function(**next_point)
+    
+    try:
+        # Update the optimizer with the evaluation results. 
+        # This should be in try-except to catch any errors!
+        optimizer.register(params = next_point, target = target)
+    except:
+        pass
+    
+print("Best result: {}; f(x) = {:.3f}.".format(optimizer.max["params"], optimizer.max["target"]))
