@@ -1,4 +1,6 @@
+from tkinter import Image
 import numpy as np
+from PIL import Image
 
 def test_mat(side_length):
     """
@@ -15,11 +17,8 @@ def test_mat(side_length):
 
 def blockshaped(arr, nrows, ncols):
     """
-    Return an array of shape (n, nrows, ncols) where
-    n * nrows * ncols = arr.size
-
-    If arr is a 2D array, the returned array should look like n subblocks with
-    each subblock preserving the "physical" layout of arr.
+    Creates a 3d matrix, comprising of nrows by ncols 2d-matrices ordered along the 3rd axis.
+    The 3d matrix is constructed from arr by splitting the original array into nrow by ncol blocks.
     """
     h, w = arr.shape
     assert h % nrows == 0, f"{h} rows is not evenly divisible by {nrows}"
@@ -32,7 +31,7 @@ def reformat(reshaped_mat):
     """
     Returns the original matrix from the segmented grids.
     """
-    size = (12,12)
+    size = (1200,1200)
     listed_mats = [[reshaped_mat[j*3 + i,:,:] for i in range(size[0]//reshaped_mat.shape[1])] for j in range(size[1]//reshaped_mat.shape[2])]
     return(np.block(listed_mats).reshape((12,12)))
 
@@ -42,3 +41,42 @@ def average_grid(mat):
     """
     sum = np.mean(mat, axis=((1,2)))
     return(sum)
+
+def ta_conversion(matrix):
+    """
+    Return the thermal anomaly grided matrix.
+    """
+    for i in range(len(matrix)):
+        for j in range(len(matrix)):
+            if matrix[i][j] == 3 or matrix[i][j] == 5:
+                matrix[i][j] = 0
+            elif matrix[i][j] >= 7:
+                matrix[i][j] = 1
+            elif matrix[i][j] == 4:
+                matrix[i][j] = 0
+            else:
+                matrix[i][j] = 0
+    return matrix
+
+def average_ta(mat):
+    """
+    Returns whether there is a fire or not in a block.
+    """
+    sum = np.mean(mat, axis=((1,2)))
+    # number_of_fires = 0
+    for i in range(len(sum)):
+        if sum[i] > 0.4:
+            sum[i] = 1
+            # number_of_fires += 1
+        else:
+            sum[i] = 0
+    # print('Image: ' + str(image_number) + ' number of fires: ' + str(number_of_fires))
+    return(sum)
+
+def load_image(image_location):
+    """
+    Create an array from an input tiff image, image_location is a string showing the path to the source image.
+    """
+    image = Image.open(image_location)
+    out_array = np.array(image)
+    return out_array
