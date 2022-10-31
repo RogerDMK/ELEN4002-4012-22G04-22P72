@@ -39,7 +39,7 @@ def average_grid(mat):
     """
     Gets the average value of a reshaped matrix.
     """
-    sum = np.mean(mat, axis=((1,2)))
+    sum = np.nanmean(mat, axis=((1,2)))
     return(sum)
 
 def ta_conversion(matrix):
@@ -106,4 +106,16 @@ def combine_all_q(q1, q2, q3, q4):
                 output[i,j] = q3[(i - 300)*300 + j, 1]
             else:
                 output[i,j] = q4[(i - 300)*300 + j - 300, 1]
+    for i in range(300):
+        if i < 299:
+            output[i,299] = (output[i,299] + output[i,300])/2
+            output[i,300] = output[i,299]
+        else:
+            for j in range(299):
+                output[299,j] = (output[299,j] + output[300,j])/2
+                output[300,j] = output[299,j]
+            output[299,299] = (output[299,299] + output[300,299] + output[299,300] + output[300,300])/4
+            output[300,299] = output[299,299]
+            output[299,300] = output[299,299]
+            output[300,300] = output[299,299]
     return(output)
