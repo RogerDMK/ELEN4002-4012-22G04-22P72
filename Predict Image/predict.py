@@ -65,21 +65,22 @@ video = VideoGenerator(pathlib.Path("./"))
 
 date_1 = date(2018, 1, 3)
 
-for i in tqdm(range(30)):
-    image = confidence(i)
-    current_month = date_1.month
-    image_title = ''
-    if current_month > 2 and current_month < 6:
-        image_title = 'Season: Autumn'
-    elif current_month > 5 and current_month < 9:
-        image_title = 'Season: Winter'
-    elif current_month > 8 and current_month < 12:
-        image_title = 'Season: Spring'
-    else:
-        image_title = 'Season: Summer'
-    title_full = 'Date: ' + date_1.strftime("%d/%m/%Y") + ' ' + image_title
-    video.save_image(image, title_full)
-    date_1 = date_1 + timedelta(days=4)
+for i in tqdm(range(90)):
+    if i > 67:
+        image = confidence(i)
+        current_month = date_1.month
+        image_title = ''
+        if current_month > 2 and current_month < 6:
+            image_title = 'Season: Autumn'
+        elif current_month > 5 and current_month < 9:
+            image_title = 'Season: Winter'
+        elif current_month > 8 and current_month < 12:
+            image_title = 'Season: Spring'
+        else:
+            image_title = 'Season: Summer'
+        title_full = 'Date: ' + date_1.strftime("%d/%m/%Y") + ' ' + image_title
+        video.save_image(image, title_full)
+        date_1 = date_1 + timedelta(days=4)
 
 video.create_video('1_year_2')
 video.clear_images()
